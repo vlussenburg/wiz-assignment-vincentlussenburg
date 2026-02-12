@@ -111,3 +111,9 @@ resource "google_project_iam_member" "terraform_kms_viewer" {
   role    = "roles/cloudkms.viewer"
   member  = "serviceAccount:${google_service_account.terraform.email}"
 }
+
+resource "google_project_iam_member" "terraform_kms_public_key_viewer" {
+  project = var.project_id
+  role    = "roles/cloudkms.publicKeyViewer"
+  member  = "serviceAccount:${google_service_account.terraform.email}"
+}
