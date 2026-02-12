@@ -17,7 +17,7 @@ spec:
       serviceAccountName: bucket-list-sa
       containers:
         - name: bucket-list
-          image: us-central1-docker.pkg.dev/clgcporg10-171/bucket-list/bucket-list:latest
+          image: bucket-list:latest
           ports:
             - containerPort: 3000
           env:

@@ -1,4 +1,4 @@
-name: Build & Push Container
+name: Build, Scan & Deploy
 
 on:
   push:
@@ -29,6 +29,9 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gcloud beta components
+        run: gcloud components install beta --quiet
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
@@ -100,3 +103,11 @@ jobs:
             --attestor="projects/${{ secrets.GCP_PROJECT_ID }}/attestors/vuln-scan-attestor" \
             --keyversion="projects/${{ secrets.GCP_PROJECT_ID }}/locations/${REGION}/keyRings/binauthz-keyring/cryptoKeys/binauthz-key/cryptoKeyVersions/1"
           echo "Image attested successfully."
+
+      - name: Deploy to GKE
+        run: |
+          gcloud container clusters get-credentials wiz-gke --zone ${REGION}-a --project ${{ secrets.GCP_PROJECT_ID }}
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}@${{ steps.digest.outputs.digest }}"
+          cd k8s && kustomize edit set image "bucket-list=${IMAGE_URI}" && cd ..
+          kubectl apply -k k8s/
+          kubectl rollout status deployment/bucket-list --timeout=120s

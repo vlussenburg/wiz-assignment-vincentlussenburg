@@ -45,6 +45,11 @@ resource "google_container_cluster" "primary" {
     vulnerability_mode = "VULNERABILITY_BASIC"
   }
 
+  # Preventative control: only attested images can run
+  binary_authorization {
+    evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
+  }
+
   deletion_protection = false
 }
 
