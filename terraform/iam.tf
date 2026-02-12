@@ -77,3 +77,30 @@ resource "google_project_iam_member" "ci_gke_developer" {
   role    = "roles/container.developer"
   member  = "serviceAccount:${google_service_account.ci.email}"
 }
+
+# ---------- Terraform Service Account ----------
+
+resource "google_service_account" "terraform" {
+  account_id   = "terraform-sa"
+  display_name = "Terraform CI Service Account"
+}
+
+resource "google_project_iam_member" "terraform_editor" {
+  project = var.project_id
+  role    = "roles/editor"
+  member  = "serviceAccount:${google_service_account.terraform.email}"
+}
+
+# Terraform needs to manage IAM bindings
+resource "google_project_iam_member" "terraform_iam_admin" {
+  project = var.project_id
+  role    = "roles/resourcemanager.projectIamAdmin"
+  member  = "serviceAccount:${google_service_account.terraform.email}"
+}
+
+# Terraform needs to enable/disable APIs
+resource "google_project_iam_member" "terraform_service_usage" {
+  project = var.project_id
+  role    = "roles/serviceusage.serviceUsageAdmin"
+  member  = "serviceAccount:${google_service_account.terraform.email}"
+}
