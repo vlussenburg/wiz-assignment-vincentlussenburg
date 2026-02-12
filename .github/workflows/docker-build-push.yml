@@ -7,7 +7,7 @@ on:
       - "bucket-list/**"
       - ".github/workflows/docker-build-push.yml"
   pull_request:
-   branches: [main]
+    branches: [main]
   workflow_dispatch:
 
 env:
