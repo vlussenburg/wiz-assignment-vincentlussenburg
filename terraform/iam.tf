@@ -31,3 +31,9 @@ resource "google_project_iam_member" "ci_artifact_registry_writer" {
   role    = "roles/artifactregistry.writer"
   member  = "serviceAccount:${google_service_account.ci.email}"
 }
+
+resource "google_project_iam_member" "ci_container_analysis_viewer" {
+  project = var.project_id
+  role    = "roles/containeranalysis.occurrences.viewer"
+  member  = "serviceAccount:${google_service_account.ci.email}"
+}

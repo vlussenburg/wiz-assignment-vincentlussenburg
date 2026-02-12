@@ -2,10 +2,12 @@ name: Build & Push Container
 
 on:
   push:
-    branches: [main]
+    branches: [main, ci/image-scanning]
     paths:
       - "bucket-list/**"
       - ".github/workflows/docker-build-push.yml"
+      - "terraform/artifact-registry.tf"
+      - "terraform/iam.tf"
   workflow_dispatch:
 
 env:
@@ -44,3 +46,37 @@ jobs:
         run: |
           IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}"
           docker run --rm "${IMAGE_URI}:${GITHUB_SHA::7}" cat /wizexercise.txt
+
+      - name: Wait for vulnerability scan
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}:${GITHUB_SHA::7}"
+          echo "Waiting for vulnerability scan on ${IMAGE_URI}..."
+          for i in $(seq 1 30); do
+            RESULT=$(gcloud artifacts docker images describe "${IMAGE_URI}" \
+              --show-package-vulnerability \
+              --format="value(package_vulnerability_summary.severity_summary)" 2>/dev/null || true)
+            if [ -n "$RESULT" ]; then
+              echo "Scan complete."
+              break
+            fi
+            echo "  Scan in progress... (attempt ${i}/30)"
+            sleep 10
+          done
+
+      - name: Check for critical vulnerabilities
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}:${GITHUB_SHA::7}"
+          echo "=== Vulnerability Summary ==="
+          gcloud artifacts docker images describe "${IMAGE_URI}" \
+            --show-package-vulnerability \
+            --format="table(package_vulnerability_summary.severity_summary)"
+
+          CRITICAL=$(gcloud artifacts docker images describe "${IMAGE_URI}" \
+            --show-package-vulnerability \
+            --format="value(package_vulnerability_summary.severity_summary.CRITICAL)" 2>/dev/null || echo "0")
+
+          if [ -n "$CRITICAL" ] && [ "$CRITICAL" != "0" ]; then
+            echo "::error::Image has ${CRITICAL} CRITICAL vulnerabilities — failing pipeline."
+            exit 1
+          fi
+          echo "No critical vulnerabilities found."
