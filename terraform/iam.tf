@@ -104,3 +104,10 @@ resource "google_project_iam_member" "terraform_service_usage" {
   role    = "roles/serviceusage.serviceUsageAdmin"
   member  = "serviceAccount:${google_service_account.terraform.email}"
 }
+
+# Terraform needs to read KMS public keys (Binary Authorization attestor)
+resource "google_project_iam_member" "terraform_kms_viewer" {
+  project = var.project_id
+  role    = "roles/cloudkms.viewer"
+  member  = "serviceAccount:${google_service_account.terraform.email}"
+}
