@@ -18,3 +18,16 @@ resource "google_project_iam_member" "mongo_vm_storage_admin" {
   role    = "roles/storage.objectAdmin"
   member  = "serviceAccount:${google_service_account.mongo_vm.email}"
 }
+
+# ---------- CI Service Account ----------
+
+resource "google_service_account" "ci" {
+  account_id   = "ci-pipeline-sa"
+  display_name = "CI/CD Service Account"
+}
+
+resource "google_project_iam_member" "ci_artifact_registry_writer" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${google_service_account.ci.email}"
+}
