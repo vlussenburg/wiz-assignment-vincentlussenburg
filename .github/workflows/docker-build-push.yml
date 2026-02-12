@@ -2,12 +2,10 @@ name: Build & Push Container
 
 on:
   push:
-    branches: [main, ci/image-scanning]
+    branches: [main]
     paths:
       - "bucket-list/**"
       - ".github/workflows/docker-build-push.yml"
-      - "terraform/artifact-registry.tf"
-      - "terraform/iam.tf"
   workflow_dispatch:
 
 env:
@@ -62,19 +60,8 @@ jobs:
 
           SCAN_DONE=false
           for i in $(seq 1 60); do
-            # Capture both stdout and stderr
             JSON=$(gcloud artifacts docker images describe "${IMAGE_URI}" \
               --show-package-vulnerability --format=json 2>&1) || true
-
-            # Debug: show first 500 chars on first attempt
-            if [ "$i" -eq 1 ]; then
-              echo "::group::Debug: raw gcloud output (first attempt)"
-              echo "$JSON" | head -c 2000
-              echo ""
-              echo "::endgroup::"
-            fi
-
-            # Check if JSON is valid and has discovery data
             STATUS=$(echo "$JSON" | jq -r '.discovery_summary.discovery[0].discovery.analysisStatus // empty' 2>/dev/null || echo "")
             if [ "$STATUS" = "FINISHED_SUCCESS" ] || [ "$STATUS" = "FINISHED_FAILED" ]; then
               SCAN_DONE=true
@@ -87,8 +74,6 @@ jobs:
 
           if [ "$SCAN_DONE" != "true" ]; then
             echo "::error::Vulnerability scan did not complete within 10 minutes."
-            echo "Last output:"
-            echo "$JSON" | head -c 2000
             exit 1
           fi
 
@@ -106,3 +91,12 @@ jobs:
             exit 1
           fi
           echo "No critical vulnerabilities. Pipeline passed."
+
+      - name: Attest image with Binary Authorization
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}@${{ steps.digest.outputs.digest }}"
+          gcloud beta container binauthz attestations sign-and-create \
+            --artifact-url="${IMAGE_URI}" \
+            --attestor="projects/${{ secrets.GCP_PROJECT_ID }}/attestors/vuln-scan-attestor" \
+            --keyversion="projects/${{ secrets.GCP_PROJECT_ID }}/locations/${REGION}/keyRings/binauthz-keyring/cryptoKeys/binauthz-key/cryptoKeyVersions/1"
+          echo "Image attested successfully."
