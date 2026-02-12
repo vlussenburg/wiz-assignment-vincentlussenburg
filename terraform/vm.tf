@@ -40,4 +40,9 @@ resource "google_compute_instance" "mongo" {
     mongo_app_password   = var.mongo_app_password
     backup_bucket        = google_storage_bucket.backups.name
   })
+
+  # Prevent VM recreation when a new Ubuntu image is published
+  lifecycle {
+    ignore_changes = [boot_disk[0].initialize_params[0].image]
+  }
 }

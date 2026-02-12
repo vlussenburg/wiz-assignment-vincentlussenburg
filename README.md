@@ -97,7 +97,7 @@ MONGO_USER=$(terraform -chdir=terraform output -raw mongo_app_user)
 MONGO_PASS=$(terraform -chdir=terraform output -raw mongo_app_password)
 
 kubectl create secret generic mongo-credentials \
-  --from-literal=MONGO_URI="mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_IP}:27017/bucketlist?authSource=admin"
+  --from-literal=MONGO_URI="mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_IP}:27017/bucketlist?authSource=bucketlist"
 ```
 
 > **Note:** If your password contains `@`, `:`  or `/`, URL-encode those characters (e.g. `@` → `%40`).

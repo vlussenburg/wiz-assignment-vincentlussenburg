@@ -75,7 +75,9 @@ set -euo pipefail
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 DUMP_DIR="/tmp/mongodump-$TIMESTAMP"
 mongodump \
-  --uri="mongodb://${mongo_admin_user}:${mongo_admin_password}@localhost:27017/?authSource=admin" \
+  --host=localhost --port=27017 \
+  --username='${mongo_admin_user}' --password='${mongo_admin_password}' \
+  --authenticationDatabase=admin \
   --out="$DUMP_DIR"
 tar czf "/tmp/backup-$TIMESTAMP.tar.gz" -C "$DUMP_DIR" .
 gsutil cp "/tmp/backup-$TIMESTAMP.tar.gz" "gs://${backup_bucket}/backup-$TIMESTAMP.tar.gz"
