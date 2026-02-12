@@ -24,6 +24,17 @@ output "backup_bucket_url" {
   value       = "gs://${google_storage_bucket.backups.name}"
 }
 
+output "mongo_app_user" {
+  description = "MongoDB application username"
+  value       = var.mongo_app_user
+}
+
+output "mongo_app_password" {
+  description = "MongoDB application password"
+  value       = var.mongo_app_password
+  sensitive   = true
+}
+
 output "artifact_registry_url" {
   description = "Artifact Registry Docker repo URL"
   value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.app.repository_id}"
