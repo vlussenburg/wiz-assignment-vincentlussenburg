@@ -7,7 +7,7 @@ Two-tier web application deployed on GCP with intentional security misconfigurat
 ```
 Internet → GCP HTTP LB → GKE (private subnet) → bucket-list app (Node.js)
                                                         ↓
-                          VM (public subnet) ────→ MongoDB 5.0
+                          VM (public subnet) ────→ MongoDB 6.0
                                                         ↓
                                                   cron backup → GCS bucket (public)
 ```
@@ -18,7 +18,7 @@ Internet → GCP HTTP LB → GKE (private subnet) → bucket-list app (Node.js)
 |-----------|---------|
 | **App** | Node.js/Express SPA (`bucket-list/`) — task manager backed by MongoDB |
 | **GKE Cluster** | Private cluster in `10.0.2.0/24`, exposed via GCE Ingress (HTTP LB) |
-| **MongoDB VM** | Ubuntu 22.04, MongoDB 5.0, public IP, in `10.0.1.0/24` |
+| **MongoDB VM** | Ubuntu 22.04, MongoDB 6.0, public IP, in `10.0.1.0/24` |
 | **GCS Bucket** | Daily `mongodump` backups via cron |
 | **Artifact Registry** | Docker repo for the app container image |
 
@@ -27,7 +27,7 @@ Internet → GCP HTTP LB → GKE (private subnet) → bucket-list app (Node.js)
 These are **required** by the exercise spec — do not fix:
 
 - VM runs Ubuntu 22.04 (1+ year outdated — 24.04 LTS available)
-- MongoDB 5.0 (EOL Oct 2024)
+- MongoDB 6.0 (EOL Aug 2025)
 - SSH open to `0.0.0.0/0` on the VM
 - VM service account has `roles/compute.admin` (can create/manage VMs)
 - GCS backup bucket allows public read and public listing
@@ -87,15 +87,28 @@ docker build -t us-central1-docker.pkg.dev/<PROJECT_ID>/bucket-list/bucket-list:
 docker push us-central1-docker.pkg.dev/<PROJECT_ID>/bucket-list/bucket-list:latest
 ```
 
-### 4. Deploy to Kubernetes
+### 4. Create Kubernetes Secret
 
-Update `k8s/deployment.yaml` with the Artifact Registry image URL and MongoDB VM internal IP from `terraform output`, then:
+The app reads `MONGO_URI` from a Kubernetes Secret. Create it using the MongoDB VM internal IP and app password from your `terraform.tfvars`:
+
+```bash
+# Get the VM internal IP
+MONGO_IP=$(terraform -chdir=terraform output -raw mongo_vm_internal_ip)
+
+# Create the secret (URL-encode special characters in the password)
+kubectl create secret generic mongo-credentials \
+  --from-literal=MONGO_URI="mongodb://<MONGO_APP_USER>:<MONGO_APP_PASSWORD>@${MONGO_IP}:27017/bucketlist?authSource=bucketlist"
+```
+
+### 5. Deploy to Kubernetes
+
+Update `k8s/deployment.yaml` with your Artifact Registry image URL, then:
 
 ```bash
 kubectl apply -f k8s/
 ```
 
-### 5. Verify
+### 6. Verify
 
 ```bash
 # Get the load balancer IP (may take a few minutes)

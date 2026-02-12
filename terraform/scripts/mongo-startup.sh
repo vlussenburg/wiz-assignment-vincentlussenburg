@@ -1,14 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-# ---------- Install MongoDB 5.0 (intentionally outdated, EOL Oct 2024) ----------
+# ---------- Install MongoDB 6.0 (intentionally outdated, EOL Aug 2025) ----------
 
 apt-get update
 apt-get install -y gnupg curl
 
-curl -fsSL https://www.mongodb.org/static/pgp/server-5.0.asc | apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/5.0 multiverse" \
-  > /etc/apt/sources.list.d/mongodb-org-5.0.list
+curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" \
+  > /etc/apt/sources.list.d/mongodb-org-6.0.list
 
 apt-get update
 apt-get install -y mongodb-org
