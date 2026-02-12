@@ -37,3 +37,43 @@ resource "google_project_iam_member" "ci_container_analysis_viewer" {
   role    = "roles/containeranalysis.occurrences.viewer"
   member  = "serviceAccount:${google_service_account.ci.email}"
 }
+
+# ---------- CI Binary Authorization Permissions ----------
+
+# Read the attestor
+resource "google_binary_authorization_attestor_iam_member" "ci_attestor_viewer" {
+  project  = var.project_id
+  attestor = google_binary_authorization_attestor.vuln_scan.name
+  role     = "roles/binaryauthorization.attestorsVerifier"
+  member   = "serviceAccount:${google_service_account.ci.email}"
+}
+
+# Attach occurrences to the Container Analysis note
+resource "google_project_iam_member" "ci_note_attacher" {
+  project = var.project_id
+  role    = "roles/containeranalysis.notes.attacher"
+  member  = "serviceAccount:${google_service_account.ci.email}"
+}
+
+# Create attestation occurrences
+resource "google_project_iam_member" "ci_occurrence_editor" {
+  project = var.project_id
+  role    = "roles/containeranalysis.occurrences.editor"
+  member  = "serviceAccount:${google_service_account.ci.email}"
+}
+
+# Sign attestations with the KMS key
+resource "google_kms_crypto_key_iam_member" "ci_kms_signer" {
+  crypto_key_id = google_kms_crypto_key.binauthz.id
+  role          = "roles/cloudkms.signerVerifier"
+  member        = "serviceAccount:${google_service_account.ci.email}"
+}
+
+# ---------- CI GKE Deploy Permissions ----------
+
+# Get GKE credentials and deploy workloads
+resource "google_project_iam_member" "ci_gke_developer" {
+  project = var.project_id
+  role    = "roles/container.developer"
+  member  = "serviceAccount:${google_service_account.ci.email}"
+}

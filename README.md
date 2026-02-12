@@ -39,8 +39,19 @@ These are **required** by the exercise spec — do not fix:
 - MongoDB authentication enabled (admin + app user)
 - GKE cluster uses private nodes
 - Control plane audit logging enabled (`APISERVER`, `SYSTEM_COMPONENTS`, `WORKLOADS`)
+- **Preventative control**: Binary Authorization — GKE only runs images attested by the CI pipeline after passing vulnerability scan (no critical CVEs)
 - **Preventative control**: Firewall restricting MongoDB to K8s network only
 - **Detective control**: GKE Security Posture with vulnerability scanning
+- **Detective control**: Artifact Registry automatic vulnerability scanning
+
+## Local Development
+
+```bash
+cd bucket-list
+docker compose up
+```
+
+App at http://localhost:3000 with a local MongoDB. No GCP needed.
 
 ## Prerequisites
 
@@ -76,18 +87,7 @@ terraform apply
 gcloud container clusters get-credentials wiz-gke --zone us-central1-a --project <PROJECT_ID>
 ```
 
-### 3. Build & Push Container
-
-```bash
-# Configure Docker for Artifact Registry
-gcloud auth configure-docker us-central1-docker.pkg.dev
-
-# Build and push
-docker build -t us-central1-docker.pkg.dev/<PROJECT_ID>/bucket-list/bucket-list:latest ./bucket-list
-docker push us-central1-docker.pkg.dev/<PROJECT_ID>/bucket-list/bucket-list:latest
-```
-
-### 4. Create Kubernetes Secret
+### 3. Create Kubernetes Secret
 
 The app reads `MONGO_URI` from a Kubernetes Secret. Build the URI from Terraform outputs:
 
@@ -102,15 +102,15 @@ kubectl create secret generic mongo-credentials \
 
 > **Note:** If your password contains `@`, `:`  or `/`, URL-encode those characters (e.g. `@` → `%40`).
 
-### 5. Deploy to Kubernetes
+### 4. Deploy to Kubernetes
 
-Update `k8s/deployment.yaml` with your Artifact Registry image URL, then:
+Push to `main` triggers the CI pipeline which builds, scans, attests, and deploys automatically. For the initial deploy or manual deploys:
 
 ```bash
-kubectl apply -f k8s/
+kubectl apply -k k8s/
 ```
 
-### 6. Verify
+### 5. Verify
 
 ```bash
 # Get the load balancer IP (may take a few minutes)
@@ -119,6 +119,18 @@ kubectl get ingress bucket-list
 # Check public bucket access
 gsutil ls gs://<PROJECT_ID>-wiz-backups
 ```
+
+## CI/CD Pipeline
+
+GitHub Actions workflow (`.github/workflows/docker-build-push.yml`) runs on push to `main`:
+
+1. **Build & push** — builds container, tags with commit SHA + `latest`, pushes to Artifact Registry
+2. **Verify** — confirms `wizexercise.txt` is in the image
+3. **Vulnerability scan gate** — waits for GCP Container Scanning, fails on critical CVEs
+4. **Binary Authorization attestation** — signs the image with a KMS key so GKE accepts it
+5. **Deploy to GKE** — `kustomize edit set image` + `kubectl apply -k` with the attested image digest
+
+Required GitHub secrets: `GCP_SA_KEY` (CI service account JSON key), `GCP_PROJECT_ID`
 
 ## Project Structure
 
@@ -137,6 +149,7 @@ gsutil ls gs://<PROJECT_ID>-wiz-backups
 │   ├── storage.tf         # GCS backup bucket (public)
 │   ├── iam.tf             # Service accounts + IAM
 │   ├── artifact-registry.tf
+│   ├── binary-authorization.tf  # KMS key, attestor, policy
 │   └── scripts/
 │       └── mongo-startup.sh  # MongoDB install, auth, backup cron
 ├── k8s/                   # Kubernetes manifests
@@ -144,5 +157,7 @@ gsutil ls gs://<PROJECT_ID>-wiz-backups
 │   ├── service.yaml       # ClusterIP service
 │   ├── ingress.yaml       # GCE Ingress (HTTP LB)
 │   └── rbac.yaml          # cluster-admin binding (intentional)
+├── .github/workflows/
+│   └── docker-build-push.yml  # CI: build, scan, attest, deploy
 └── Dockerfile.tools       # Dev toolbox (terraform + kubectl + gcloud)
 ```
