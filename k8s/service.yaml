@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bucket-list
+  labels:
+    app: bucket-list
+spec:
+  type: ClusterIP
+  selector:
+    app: bucket-list
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP

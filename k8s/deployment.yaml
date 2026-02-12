@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bucket-list
+  labels:
+    app: bucket-list
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bucket-list
+  template:
+    metadata:
+      labels:
+        app: bucket-list
+    spec:
+      serviceAccountName: bucket-list-sa
+      containers:
+        - name: bucket-list
+          image: ARTIFACT_REGISTRY_URL/bucket-list:latest  # replace after terraform apply
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGO_HOST
+              value: MONGO_VM_INTERNAL_IP  # replace with terraform output mongo_vm_internal_ip
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_USER
+              value: bucketlist
+            - name: MONGO_PASSWORD
+              value: CHANGE_ME  # replace with your mongo_app_password
+            - name: MONGO_DB
+              value: bucketlist
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
