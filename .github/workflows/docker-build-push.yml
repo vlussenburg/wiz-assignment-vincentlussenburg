@@ -55,21 +55,25 @@ jobs:
           for i in $(seq 1 30); do
             JSON=$(gcloud artifacts docker images describe "${IMAGE_URI}" \
               --show-package-vulnerability --format=json 2>/dev/null || echo "{}")
-            TOTAL=$(echo "$JSON" | jq '[.package_vulnerability_summary.severity_summary // {} | to_entries[].value] | add // 0')
-            if [ "$TOTAL" -gt 0 ] 2>/dev/null; then
+            STATUS=$(echo "$JSON" | jq -r '.discovery_summary.discovery[0].discovery.analysisStatus // "PENDING"')
+            if [ "$STATUS" = "FINISHED_SUCCESS" ]; then
+              echo "Scan complete."
               break
             fi
-            echo "  Scan in progress... (attempt ${i}/30)"
+            echo "  Scan status: ${STATUS} (attempt ${i}/30)"
             sleep 10
           done
 
           echo "=== Vulnerability Summary ==="
-          echo "$JSON" | jq '.package_vulnerability_summary.severity_summary // "No results"'
+          echo "$JSON" | jq '{
+            critical: (.package_vulnerability_summary.vulnerabilities.CRITICAL // [] | length),
+            high:     (.package_vulnerability_summary.vulnerabilities.HIGH // [] | length),
+            medium:   (.package_vulnerability_summary.vulnerabilities.MEDIUM // [] | length),
+            low:      (.package_vulnerability_summary.vulnerabilities.LOW // [] | length)
+          }'
 
-          CRITICAL=$(echo "$JSON" | jq '.package_vulnerability_summary.severity_summary.CRITICAL // 0')
-          echo "Critical: ${CRITICAL}"
-
-          if [ "$CRITICAL" -gt 0 ] 2>/dev/null; then
+          CRITICAL=$(echo "$JSON" | jq '(.package_vulnerability_summary.vulnerabilities.CRITICAL // []) | length')
+          if [ "$CRITICAL" -gt 0 ]; then
             echo "::error::Image has ${CRITICAL} CRITICAL vulnerabilities — failing pipeline."
             exit 1
           fi
