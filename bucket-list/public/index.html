@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bucket List</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>&#x1f3af; Bucket List</h1>
+      <p class="subtitle">Things to do before you kick the bucket (or the storage kind)</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Add task -->
+    <form id="add-form" class="card add-form">
+      <input id="title" type="text" placeholder="What's on your bucket list?" required />
+      <input id="description" type="text" placeholder="Details (optional)" />
+      <button type="submit">Add</button>
+    </form>
+
+    <!-- Filters -->
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="done">Done</button>
+    </div>
+
+    <!-- Task list -->
+    <div id="tasks" class="task-list"></div>
+
+    <!-- Empty state -->
+    <div id="empty" class="empty-state hidden">
+      <p>Nothing here yet — add something to your bucket list!</p>
+    </div>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

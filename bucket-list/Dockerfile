@@ -1,0 +1,15 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY . .
+
+# Required by Wiz exercise — must contain your name
+COPY wizexercise.txt /wizexercise.txt
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]
