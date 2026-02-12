@@ -47,22 +47,50 @@ jobs:
           IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}"
           docker run --rm "${IMAGE_URI}:${GITHUB_SHA::7}" cat /wizexercise.txt
 
-      - name: Vulnerability scan gate
+      - name: Get image digest
+        id: digest
         run: |
           IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}:${GITHUB_SHA::7}"
+          DIGEST=$(gcloud artifacts docker images describe "${IMAGE_URI}" --format='value(image_summary.digest)')
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "Image digest: ${DIGEST}"
+
+      - name: Vulnerability scan gate
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}@${{ steps.digest.outputs.digest }}"
           echo "Waiting for vulnerability scan on ${IMAGE_URI}..."
 
-          for i in $(seq 1 30); do
+          SCAN_DONE=false
+          for i in $(seq 1 60); do
+            # Capture both stdout and stderr
             JSON=$(gcloud artifacts docker images describe "${IMAGE_URI}" \
-              --show-package-vulnerability --format=json 2>/dev/null || echo "{}")
-            STATUS=$(echo "$JSON" | jq -r '.discovery_summary.discovery[0].discovery.analysisStatus // "PENDING"')
-            if [ "$STATUS" = "FINISHED_SUCCESS" ]; then
-              echo "Scan complete."
+              --show-package-vulnerability --format=json 2>&1) || true
+
+            # Debug: show first 500 chars on first attempt
+            if [ "$i" -eq 1 ]; then
+              echo "::group::Debug: raw gcloud output (first attempt)"
+              echo "$JSON" | head -c 2000
+              echo ""
+              echo "::endgroup::"
+            fi
+
+            # Check if JSON is valid and has discovery data
+            STATUS=$(echo "$JSON" | jq -r '.discovery_summary.discovery[0].discovery.analysisStatus // empty' 2>/dev/null || echo "")
+            if [ "$STATUS" = "FINISHED_SUCCESS" ] || [ "$STATUS" = "FINISHED_FAILED" ]; then
+              SCAN_DONE=true
+              echo "Scan finished with status: ${STATUS}"
               break
             fi
-            echo "  Scan status: ${STATUS} (attempt ${i}/30)"
+            echo "  Scan status: [${STATUS:-not yet indexed}] (attempt ${i}/60)"
             sleep 10
           done
+
+          if [ "$SCAN_DONE" != "true" ]; then
+            echo "::error::Vulnerability scan did not complete within 10 minutes."
+            echo "Last output:"
+            echo "$JSON" | head -c 2000
+            exit 1
+          fi
 
           echo "=== Vulnerability Summary ==="
           echo "$JSON" | jq '{
