@@ -6,6 +6,8 @@ on:
     paths:
       - "bucket-list/**"
       - ".github/workflows/docker-build-push.yml"
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -29,6 +31,9 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gcloud beta components
+        run: gcloud components install beta --quiet
 
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
