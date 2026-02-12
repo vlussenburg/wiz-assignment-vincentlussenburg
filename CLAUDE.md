@@ -22,7 +22,7 @@ Internet → GCP HTTP LB → GKE (private subnet) → bucket-list app (Node.js)
 - VM service account: `roles/compute.admin` (overly permissive)
 - GCS backup bucket: public read + public listing (`allUsers`)
 - K8s: `cluster-admin` ClusterRoleBinding for the app SA (`k8s/rbac.yaml`)
-- App: three NoSQL injection surfaces (see below)
+- App: three NoSQL injection surfaces + command injection RCE (see below)
 
 ## Secure Configurations (must stay correct)
 
@@ -58,11 +58,15 @@ cd bucket-list && docker compose up    # app at localhost:3000
 
 `MONGO_URI` (full connection string) or individual: `MONGO_HOST`, `MONGO_PORT`, `MONGO_USER`, `MONGO_PASSWORD`, `MONGO_DB`. `PORT` defaults to 3000.
 
-### NoSQL Injection (intentional — do NOT patch)
+### Injection Vulnerabilities (intentional — do NOT patch)
 
+**NoSQL Injection:**
 1. `GET /api/tasks?status[$ne]=done` — query param operator injection
 2. `POST /api/tasks/search` — request body forwarded as raw MongoDB `find()` query
 3. `PUT /api/tasks/:id` — request body forwarded as raw MongoDB update (`$set`, `$unset`, etc.)
+
+**Command Injection (RCE):**
+4. `GET /api/tasks/export?format=json;id` — `format` param interpolated into `child_process.exec()` shell command
 
 ### API Routes
 
@@ -71,6 +75,7 @@ cd bucket-list && docker compose up    # app at localhost:3000
 | GET | `/api/tasks` | List tasks (filterable via query params) |
 | POST | `/api/tasks` | Create task |
 | POST | `/api/tasks/search` | Search (raw MongoDB query) |
+| GET | `/api/tasks/export` | Export tasks to file (command injection RCE) |
 | PUT | `/api/tasks/:id` | Update task |
 | DELETE | `/api/tasks/:id` | Delete task |
 | GET | `/api/health` | Health / DB connectivity check |

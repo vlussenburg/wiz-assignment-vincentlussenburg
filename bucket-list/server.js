@@ -1,5 +1,6 @@
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
+const { exec } = require('child_process');
 const path = require('path');
 
 const app = express();
@@ -59,6 +60,23 @@ app.post('/api/tasks/search', async (req, res) => {
   try {
     const tasks = await db.collection('tasks').find(req.body).toArray();
     res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Export tasks — generates a file in the requested format
+// VULNERABLE: The format parameter is interpolated directly into a shell command,
+// allowing command injection. Example: GET /api/tasks/export?format=json;id
+app.get('/api/tasks/export', async (req, res) => {
+  try {
+    const tasks = await db.collection('tasks').find().toArray();
+    const format = req.query.format || 'json';
+    exec(`echo '${JSON.stringify(tasks)}' | tee /tmp/tasks.${format}`, (err, stdout) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.set('Content-Disposition', `attachment; filename="tasks.${format}"`);
+      res.type('text/plain').send(stdout);
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
