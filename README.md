@@ -89,16 +89,18 @@ docker push us-central1-docker.pkg.dev/<PROJECT_ID>/bucket-list/bucket-list:late
 
 ### 4. Create Kubernetes Secret
 
-The app reads `MONGO_URI` from a Kubernetes Secret. Create it using the MongoDB VM internal IP and app password from your `terraform.tfvars`:
+The app reads `MONGO_URI` from a Kubernetes Secret. Build the URI from Terraform outputs:
 
 ```bash
-# Get the VM internal IP
 MONGO_IP=$(terraform -chdir=terraform output -raw mongo_vm_internal_ip)
+MONGO_USER=$(terraform -chdir=terraform output -raw mongo_app_user)
+MONGO_PASS=$(terraform -chdir=terraform output -raw mongo_app_password)
 
-# Create the secret (URL-encode special characters in the password)
 kubectl create secret generic mongo-credentials \
-  --from-literal=MONGO_URI="mongodb://<MONGO_APP_USER>:<MONGO_APP_PASSWORD>@${MONGO_IP}:27017/bucketlist?authSource=bucketlist"
+  --from-literal=MONGO_URI="mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_IP}:27017/bucketlist?authSource=admin"
 ```
+
+> **Note:** If your password contains `@`, `:`  or `/`, URL-encode those characters (e.g. `@` → `%40`).
 
 ### 5. Deploy to Kubernetes
 

@@ -1,0 +1,46 @@
+name: Build & Push Container
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "bucket-list/**"
+      - ".github/workflows/docker-build-push.yml"
+  workflow_dispatch:
+
+env:
+  REGION: us-central1
+  REPO: bucket-list
+  IMAGE: bucket-list
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+
+      - name: Build and push
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}"
+          docker build -t "${IMAGE_URI}:${GITHUB_SHA::7}" -t "${IMAGE_URI}:latest" ./bucket-list
+          docker push "${IMAGE_URI}:${GITHUB_SHA::7}"
+          docker push "${IMAGE_URI}:latest"
+
+      - name: Verify wizexercise.txt
+        run: |
+          IMAGE_URI="${REGION}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${REPO}/${IMAGE}"
+          docker run --rm "${IMAGE_URI}:${GITHUB_SHA::7}" cat /wizexercise.txt
