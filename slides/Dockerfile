@@ -43,7 +43,17 @@ RUN --mount=type=secret,id=env,target=/run/secrets/.env \
     export $(grep IDEOGRAM_API_KEY /run/secrets/.env) && \
     python generate-backgrounds.py
 
-# Stage 4: Render slides with Marp
+# Stage 5: Generate QR codes for download links
+FROM python:3.11-slim AS qrcode-stage
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends fonts-dejavu-core && \
+    rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir qrcode[pil]
+WORKDIR /build
+COPY generate-qrcodes.py .
+RUN python generate-qrcodes.py
+
+# Stage 6: Render slides with Marp
 FROM node:20 AS marp-stage
 RUN apt-get update && \
     apt-get install -y --no-install-recommends chromium && \
@@ -58,12 +68,13 @@ RUN npm install -g @marp-team/marp-cli
 WORKDIR /build
 COPY slides.md .
 COPY title-bg.svg .
-RUN mkdir -p output/images output/backgrounds
+RUN mkdir -p output/images output/backgrounds output/qr
 COPY --from=diagrams-stage /build/architecture.png ./output/images/
 COPY --from=mermaid-stage /build/pipeline.png ./output/images/
 COPY --from=mermaid-stage /build/attack-chain.png ./output/images/
 COPY --from=backgrounds-stage /build/backgrounds/ ./output/backgrounds/
 COPY --from=asciinema-stage /build/attack-chain-demo.svg ./output/
+COPY --from=qrcode-stage /build/qr-slides.png /build/qr-pdf.png /build/qr-pptx.png ./output/qr/
 RUN marp slides.md --html --allow-local-files -o output/slides.html
 RUN marp slides.md --html --allow-local-files --pdf -o output/slides.pdf
 RUN marp slides.md --html --allow-local-files --pptx -o output/slides.pptx

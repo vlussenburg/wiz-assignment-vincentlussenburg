@@ -46,6 +46,12 @@ style: |
 
 ![bg](title-bg.svg)
 
+<div style="position: absolute; bottom: 30px; right: 40px; display: flex; gap: 16px; align-items: flex-end;">
+  <img src="output/qr/qr-slides.png" width="120">
+  <img src="output/qr/qr-pdf.png" width="120">
+  <img src="output/qr/qr-pptx.png" width="120">
+</div>
+
 <!--
 Welcome, thank you for taking the time.
 I'll walk through the architecture, the security misconfigurations,
@@ -350,6 +356,12 @@ blast radius even with cluster-admin.
 **Tools** — Terraform, Checkov, Kustomize, GitHub Actions
 
 **Repo**: github.com/vlussenburg/wiz-assignment-vincentlussenburg
+
+<div style="position: absolute; bottom: 30px; right: 40px; display: flex; gap: 16px; align-items: flex-end;">
+  <img src="output/qr/qr-slides.png" width="120">
+  <img src="output/qr/qr-pdf.png" width="120">
+  <img src="output/qr/qr-pptx.png" width="120">
+</div>
 
 <!--
 Happy to take questions!
