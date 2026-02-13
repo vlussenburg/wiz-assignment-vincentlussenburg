@@ -1,0 +1,17 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#fce8e6', 'primaryTextColor': '#202124', 'primaryBorderColor': '#ea4335', 'lineColor': '#ea4335', 'fontFamily': 'Segoe UI, Helvetica Neue, Arial, sans-serif'}}}%%
+graph TD
+    rce["1. Command Injection RCE<br/>/api/tasks/export?format=json;id"]
+    token["2. Steal K8s SA Token<br/>SA has cluster-admin"]
+    kubectl["3. Full Cluster Access<br/>kubectl create job, read secrets"]
+    ssh_key["4. Inject SSH Key<br/>gcloud compute os-login ssh-keys add<br/>VM SA has compute.admin"]
+    vm_access["5. SSH to MongoDB VM<br/>Full database access"]
+    exfil["6. Data Exfiltration<br/>MongoDB data + public GCS backups"]
+
+    rce --> token --> kubectl --> ssh_key --> vm_access --> exfil
+
+    style rce fill:#ea4335,color:#fff,stroke:#c5221f
+    style token fill:#e8710a,color:#fff,stroke:#c56000
+    style kubectl fill:#f9ab00,color:#202124,stroke:#e39400
+    style ssh_key fill:#e8710a,color:#fff,stroke:#c56000
+    style vm_access fill:#ea4335,color:#fff,stroke:#c5221f
+    style exfil fill:#b31412,color:#fff,stroke:#8c0e0d

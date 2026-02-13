@@ -19,6 +19,10 @@ node_modules/
 # Docker
 docker-compose.override.yml
 
+# Slides build output
+slides/output/
+slides/images/
+
 # Env / secrets
 .env
 *-sa-key.json
