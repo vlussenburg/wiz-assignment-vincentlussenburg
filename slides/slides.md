@@ -53,7 +53,7 @@ the controls I implemented, and then do a live demo of the attack chain.
 
 # Architecture Overview
 
-![w:900](images/architecture.png)
+![w:900](output/images/architecture.png)
 
 <!--
 Two-tier setup in a single VPC.
@@ -196,7 +196,7 @@ the database port is restricted to the pod network only.
 
 # DevSecOps Pipelines
 
-![h:480](images/pipeline.png)
+![h:480](output/images/pipeline.png)
 
 <!--
 Five stages in the container pipeline.
@@ -209,7 +209,7 @@ The terraform pipeline runs Checkov in parallel with plan/apply.
 
 # Attack Chain
 
-![h:480](images/attack-chain.png)
+![h:480](output/images/attack-chain.png)
 
 <!--
 This is the full attack chain I'll demonstrate live.

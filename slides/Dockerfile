@@ -40,18 +40,17 @@ RUN npm install -g @marp-team/marp-cli
 WORKDIR /build
 COPY slides.md .
 COPY title-bg.svg .
-RUN mkdir -p images
-COPY --from=diagrams-stage /build/architecture.png ./images/
-COPY --from=mermaid-stage /build/pipeline.png ./images/
-COPY --from=mermaid-stage /build/attack-chain.png ./images/
-RUN mkdir -p /output
-RUN marp slides.md --html --allow-local-files -o /output/slides.html
-RUN marp slides.md --html --allow-local-files --pptx -o /output/slides.pptx || \
+RUN mkdir -p output/images
+COPY --from=diagrams-stage /build/architecture.png ./output/images/
+COPY --from=mermaid-stage /build/pipeline.png ./output/images/
+COPY --from=mermaid-stage /build/attack-chain.png ./output/images/
+RUN marp slides.md --html --allow-local-files -o output/slides.html
+RUN marp slides.md --html --allow-local-files --pptx -o output/slides.pptx || \
     echo "PPTX generation skipped (Chromium issue); HTML is available"
-RUN cp -r images /output/ && cp title-bg.svg /output/
+RUN cp title-bg.svg output/
 
 # Final: serve via HTTP (file:// can't load relative assets)
 FROM nginx:alpine
-COPY --from=marp-stage /output/ /usr/share/nginx/html/
+COPY --from=marp-stage /build/output/ /usr/share/nginx/html/
 EXPOSE 80
 CMD ["sh", "-c", "cp -r /usr/share/nginx/html/* /output/ 2>/dev/null; exec nginx -g 'daemon off;'"]
