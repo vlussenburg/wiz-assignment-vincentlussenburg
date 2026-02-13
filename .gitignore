@@ -21,7 +21,6 @@ docker-compose.override.yml
 
 # Slides build output
 slides/output/
-slides/images/
 
 # Env / secrets
 .env
