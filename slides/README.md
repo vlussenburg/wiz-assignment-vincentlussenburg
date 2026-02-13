@@ -1,6 +1,6 @@
 # Presentation Slides
 
-Multi-stage Docker build that generates architecture diagrams, flowcharts, AI backgrounds, an animated terminal demo, and renders everything into HTML/PDF/PPTX via Marp.
+Multi-stage Docker build that generates architecture diagrams, flowcharts, AI backgrounds, QR codes, an animated terminal demo, and renders everything into HTML/PDF/PPTX via Marp.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ docker run --rm -d --name wiz-slides-dev \
   marpteam/marp-cli --html --allow-local-files --server --listen 0.0.0.0 .
 ```
 
-This watches for changes and auto-reloads. Note: generated images (diagrams, backgrounds) must already exist in `output/` from a prior build.
+This watches for changes and auto-reloads. Note: generated images (diagrams, backgrounds, QR codes) must already exist in `output/` from a prior build.
 
 ## Build stages
 
@@ -43,4 +43,15 @@ This watches for changes and auto-reloads. Note: generated images (diagrams, bac
 | `mermaid-stage` | Mermaid CLI + Chromium | `pipeline.png`, `attack-chain.png` |
 | `asciinema-stage` | svg-term-cli | `attack-chain-demo.svg` |
 | `backgrounds-stage` | Ideogram API | 14 slide background PNGs |
+| `qrcode-stage` | Python `qrcode` + Pillow | `qr-slides.png`, `qr-pdf.png`, `qr-pptx.png` |
 | `marp-stage` | Marp CLI + Chromium | `slides.html`, `slides.pdf`, `slides.pptx` |
+
+## CI/CD
+
+Push to `feature/slides` triggers a GitHub Actions workflow that:
+
+1. Builds the Docker image
+2. Extracts PDF and PPTX as workflow artifacts
+3. Deploys the HTML slides to GitHub Pages
+
+Live at: https://vlussenburg.github.io/wiz-assignment-vincentlussenburg/

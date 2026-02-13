@@ -347,6 +347,31 @@ blast radius even with cluster-admin.
 
 ---
 
+# Bonus: How These Slides Are Made
+
+**Marp** (Markdown → HTML/PDF/PPTX) with a multi-stage Docker build:
+
+| Stage | What it does |
+|-------|-------------|
+| `diagrams-stage` | Python `diagrams` + Graphviz → architecture diagram |
+| `mermaid-stage` | Mermaid CLI + Chromium → pipeline & attack chain flowcharts |
+| `asciinema-stage` | `svg-term-cli` → animated terminal demo from `.cast` recording |
+| `backgrounds-stage` | Ideogram API → AI-generated slide backgrounds |
+| `qrcode-stage` | Python `qrcode` → QR codes for PDF/PPTX/slides links |
+| `marp-stage` | Marp CLI + Chromium → HTML, PDF, PPTX |
+
+**CI/CD**: push to branch → GitHub Actions builds → artifacts + GitHub Pages
+
+Everything is code. Even the slides about the slides.
+
+<!--
+Yes, I used Claude Code to build the slide pipeline too.
+The entire thing — diagrams, backgrounds, QR codes, exports — runs
+in a single docker build command with no local dependencies.
+-->
+
+---
+
 ![bg](output/backgrounds/15-resources.png)
 
 # Resources
