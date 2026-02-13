@@ -45,8 +45,8 @@ COPY --from=diagrams-stage /build/architecture.png ./output/images/
 COPY --from=mermaid-stage /build/pipeline.png ./output/images/
 COPY --from=mermaid-stage /build/attack-chain.png ./output/images/
 RUN marp slides.md --html --allow-local-files -o output/slides.html
-RUN marp slides.md --html --allow-local-files --pptx -o output/slides.pptx || \
-    echo "PPTX generation skipped (Chromium issue); HTML is available"
+RUN marp slides.md --html --allow-local-files --pdf -o output/slides.pdf
+RUN marp slides.md --html --allow-local-files --pptx -o output/slides.pptx
 RUN cp title-bg.svg output/
 
 # Final: serve via HTTP (file:// can't load relative assets)
