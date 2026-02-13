@@ -25,7 +25,17 @@ RUN npx --yes @mermaid-js/mermaid-cli \
     -i attack-chain.mmd -o attack-chain.png \
     -p puppeteer.json -b transparent -w 1200 -H 900
 
-# Stage 3: Generate slide backgrounds via Ideogram API
+# Stage 3: Convert asciinema cast to animated SVG
+FROM node:20-slim AS asciinema-stage
+RUN npm install -g svg-term-cli
+WORKDIR /build
+COPY demo/attack-chain.cast .
+RUN svg-term --in attack-chain.cast --out attack-chain-demo.svg \
+    --window --width 90 --height 18 \
+    --from 0 --padding 5 \
+    --term iterm2 --profile "Builtin Dark"
+
+# Stage 4: Generate slide backgrounds via Ideogram API
 FROM python:3.11-slim AS backgrounds-stage
 WORKDIR /build
 COPY generate-backgrounds.py .
@@ -53,13 +63,18 @@ COPY --from=diagrams-stage /build/architecture.png ./output/images/
 COPY --from=mermaid-stage /build/pipeline.png ./output/images/
 COPY --from=mermaid-stage /build/attack-chain.png ./output/images/
 COPY --from=backgrounds-stage /build/backgrounds/ ./output/backgrounds/
+COPY --from=asciinema-stage /build/attack-chain-demo.svg ./output/
 RUN marp slides.md --html --allow-local-files -o output/slides.html
 RUN marp slides.md --html --allow-local-files --pdf -o output/slides.pdf
 RUN marp slides.md --html --allow-local-files --pptx -o output/slides.pptx
 RUN cp title-bg.svg output/
 
 # Final: serve via HTTP (file:// can't load relative assets)
+# slides.html refs use output/ prefix (output/images/*, output/backgrounds/*),
+# so assets must live under output/ in the web root.
 FROM nginx:alpine
-COPY --from=marp-stage /build/output/ /usr/share/nginx/html/
+COPY --from=marp-stage /build/output/ /usr/share/nginx/html/output/
+COPY --from=marp-stage /build/output/slides.html /usr/share/nginx/html/index.html
+COPY --from=marp-stage /build/output/title-bg.svg /usr/share/nginx/html/
 EXPOSE 80
-CMD ["sh", "-c", "cp -r /usr/share/nginx/html/* /output/ 2>/dev/null; exec nginx -g 'daemon off;'"]
+CMD ["sh", "-c", "cp -r /usr/share/nginx/html/output/* /output/ 2>/dev/null; exec nginx -g 'daemon off;'"]

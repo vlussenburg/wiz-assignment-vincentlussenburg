@@ -245,28 +245,12 @@ Step 4: SSH directly to the MongoDB VM. Game over.
 
 # Live Demo
 
-### What I'll show:
-
-1. **The running app** - bucket-list in the browser
-2. **Command injection RCE** - execute `id`, `whoami` via export endpoint
-3. **Token theft** - read the SA token from the container filesystem
-4. **Kubectl from the container** - demonstrate cluster-admin access
-5. **SSH key injection** - push an SSH key to the VM via compute.admin
-6. **VM access** - SSH into the MongoDB VM, show the database
-
-### Key URLs:
-```
-App:     http://<lb-ip>/
-RCE:     http://<lb-ip>/api/tasks/export?format=json;id
-Health:  http://<lb-ip>/api/health
-```
+<iframe src="output/attack-chain-demo.svg" style="width:100%;height:480px;border:none;border-radius:8px;"></iframe>
 
 <!--
-Switch to terminal now.
-Remember to show the GCS bucket public access too:
-  gsutil ls gs://clgcporg10-171-wiz-backups/
-Also show the Binary Auth enforcement:
-  kubectl run test --image=nginx  → should be blocked
+This is an animated recording of the attack chain.
+I'll also do it live if time permits.
+Steps: RCE via command injection → steal SA token → kubectl secrets → inject SSH key → SSH to VM → game over.
 -->
 
 ---
