@@ -1,0 +1,79 @@
+name: Build Slides
+
+on:
+  push:
+    branches: [feature/slides]
+    paths:
+      - "slides/**"
+      - ".github/workflows/slides.yml"
+  pull_request:
+    paths:
+      - "slides/**"
+      - ".github/workflows/slides.yml"
+  workflow_dispatch:
+
+jobs:
+  build-slides:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build slides image
+        run: |
+          echo "IDEOGRAM_API_KEY=${{ secrets.IDEOGRAM_API_KEY }}" > slides/.env.ci
+          docker build --secret id=env,src=slides/.env.ci -t wiz-slides ./slides
+          rm slides/.env.ci
+
+      - name: Extract build artifacts
+        run: |
+          docker create --name slides-extract wiz-slides
+          mkdir -p artifacts
+          docker cp slides-extract:/usr/share/nginx/html/output/slides.pdf artifacts/
+          docker cp slides-extract:/usr/share/nginx/html/output/slides.pptx artifacts/
+          # ZIP the full HTML presentation (html + images + backgrounds + SVGs)
+          docker cp slides-extract:/usr/share/nginx/html/ artifacts/html-staging/
+          cd artifacts/html-staging && zip -r ../slides-html.zip . && cd ../..
+          rm -rf artifacts/html-staging
+          docker rm slides-extract
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: slides
+          path: |
+            artifacts/slides.pdf
+            artifacts/slides.pptx
+            artifacts/slides-html.zip
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = [
+              '### Slides built successfully',
+              '',
+              `Download from [workflow artifacts](${runUrl}#artifacts):`,
+              '- **slides.pdf** — PDF export',
+              '- **slides.pptx** — PowerPoint export',
+              '- **slides-html.zip** — Interactive HTML presentation',
+            ].join('\n');
+
+            // Update existing comment if present, otherwise create new
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('### Slides built successfully')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: context.issue.number, body });
+            }
