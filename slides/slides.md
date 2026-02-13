@@ -6,17 +6,14 @@ style: |
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
   section {
     font-family: 'DM Sans', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    color: #01123f;
   }
   section h1 {
     font-weight: 700;
     color: #0054ec;
   }
-  section.lead h1 {
-    font-size: 2.5em;
-  }
-  section.lead h2 {
-    font-size: 1.4em;
-    font-weight: 300;
+  section strong {
+    color: #0054ec;
   }
   table {
     font-size: 0.75em;
@@ -26,6 +23,13 @@ style: |
   }
   pre {
     font-size: 0.7em;
+  }
+  section.lead h1 {
+    font-size: 2.5em;
+  }
+  section.lead h2 {
+    font-size: 1.4em;
+    font-weight: 300;
   }
   img {
     display: block;
@@ -51,6 +55,8 @@ the controls I implemented, and then do a live demo of the attack chain.
 
 ---
 
+![bg](output/backgrounds/02-architecture.png)
+
 # Architecture Overview
 
 ![w:900](output/images/architecture.png)
@@ -63,6 +69,8 @@ The VM runs a daily cron backup to a publicly readable GCS bucket.
 -->
 
 ---
+
+![bg](output/backgrounds/03-what-i-built.png)
 
 # What I Built
 
@@ -86,6 +94,8 @@ and the initial service account keys.
 -->
 
 ---
+
+![bg](output/backgrounds/04-how-i-built.png)
 
 # How I Built It — with Claude Code
 
@@ -111,6 +121,8 @@ The whole thing was built in about 8 hours.
 
 ---
 
+![bg](output/backgrounds/05-misconfigs.png)
+
 # Intentional Misconfigurations
 
 | # | Misconfiguration | Risk |
@@ -131,6 +143,8 @@ I'll show the full attack chain in the demo.
 -->
 
 ---
+
+![bg](output/backgrounds/06-app-vulns.png)
 
 # Application Vulnerabilities
 
@@ -172,6 +186,8 @@ which is the starting point for the attack chain.
 
 ---
 
+![bg](output/backgrounds/07-security-controls.png)
+
 # Security Controls
 
 | Type | Control | Implementation |
@@ -194,6 +210,8 @@ the database port is restricted to the pod network only.
 
 ---
 
+![bg](output/backgrounds/08-pipelines.png)
+
 # DevSecOps Pipelines
 
 ![h:480](output/images/pipeline.png)
@@ -206,6 +224,8 @@ The terraform pipeline runs Checkov in parallel with plan/apply.
 -->
 
 ---
+
+![bg](output/backgrounds/09-attack-chain.png)
 
 # Attack Chain
 
@@ -220,6 +240,8 @@ Step 4: SSH directly to the MongoDB VM. Game over.
 -->
 
 ---
+
+![bg](output/backgrounds/10-live-demo.png)
 
 # Live Demo
 
@@ -249,6 +271,8 @@ Also show the Binary Auth enforcement:
 
 ---
 
+![bg](output/backgrounds/11-business-risks.png)
+
 # Business Risks
 
 - **Full database access** — read, modify, delete all data
@@ -266,6 +290,8 @@ This is exactly the kind of attack path that Wiz excels at detecting.
 -->
 
 ---
+
+![bg](output/backgrounds/12-wiz-value.png)
 
 # Value Wiz Would Provide
 
@@ -288,6 +314,8 @@ That's what makes the prioritization possible.
 
 ---
 
+![bg](output/backgrounds/13-challenges.png)
+
 # Challenges & Adaptations
 
 | Challenge | Solution |
@@ -308,6 +336,8 @@ between KMS, Container Analysis, and the attestor.
 
 ---
 
+![bg](output/backgrounds/14-do-differently.png)
+
 # What I'd Do Differently
 
 **With more time:**
@@ -326,6 +356,8 @@ blast radius even with cluster-admin.
 -->
 
 ---
+
+![bg](output/backgrounds/15-resources.png)
 
 # Resources
 
