@@ -347,6 +347,8 @@ blast radius even with cluster-admin.
 
 ---
 
+![bg](output/backgrounds/15-bonus-slides.png)
+
 # Bonus: How These Slides Are Made
 
 **Marp** (Markdown → HTML/PDF/PPTX) with a multi-stage Docker build:
@@ -372,7 +374,7 @@ in a single docker build command with no local dependencies.
 
 ---
 
-![bg](output/backgrounds/15-resources.png)
+![bg](output/backgrounds/16-resources.png)
 
 # Resources
 

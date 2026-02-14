@@ -23,7 +23,8 @@ SLIDES = [
     ("12-wiz-value",         "white gradient background with faint light blue cloud shapes"),
     ("13-challenges",        "white gradient background with faint light blue puzzle outlines"),
     ("14-do-differently",    "white gradient background with faint light green upward arrows"),
-    ("15-resources",         "white gradient background with faint light blue bookmark shapes"),
+    ("15-bonus-slides",      "white gradient background with faint light blue code brackets and gear shapes"),
+    ("16-resources",         "white gradient background with faint light blue bookmark shapes"),
 ]
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
