@@ -1,0 +1,30 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#e8eaed', 'primaryTextColor': '#202124', 'primaryBorderColor': '#dadce0', 'lineColor': '#5f6368', 'secondaryColor': '#e8f0fe', 'tertiaryColor': '#fce8e6', 'fontFamily': 'Segoe UI, Helvetica Neue, Arial, sans-serif'}}}%%
+graph TD
+    trigger(["Push to main<br/>(bucket-list/**)"])
+    build["Build Docker Image"]
+    push["Push to<br/>Artifact Registry"]
+    verify["Verify<br/>wizexercise.txt"]
+    scan{"Vulnerability<br/>Scan Gate"}
+    attest["Binary Authorization<br/>Attestation"]
+    fail["Pipeline Fails"]
+    deploy["Deploy to GKE<br/>(kustomize)"]
+
+    trigger --> build --> push --> verify --> scan
+    scan -->|"0 critical CVEs"| attest --> deploy
+    scan -->|"Critical CVEs found"| fail
+
+    tf_trigger(["Push to main<br/>(terraform/**)"])
+    checkov["Checkov<br/>IaC Scan"]
+    plan["Terraform Plan"]
+    apply["Terraform Apply"]
+    sarif["SARIF Upload<br/>GitHub Security"]
+
+    tf_trigger --> checkov --> sarif
+    tf_trigger --> plan --> apply
+
+    style fail fill:#ea4335,color:#fff,stroke:#c5221f
+    style attest fill:#34a853,color:#fff,stroke:#1e8e3e
+    style deploy fill:#4285f4,color:#fff,stroke:#1a73e8
+    style trigger fill:#e8f0fe,stroke:#1a73e8,color:#1a73e8
+    style tf_trigger fill:#e8f0fe,stroke:#1a73e8,color:#1a73e8
+    style sarif fill:#fbbc04,color:#202124,stroke:#f9ab00
